@@ -1,3 +1,12 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Tambahkan custom styles di sini kalau perlu */
+@layer base {
+  body {
+    @apply bg-primary-bg text-dark-text font-poppins;
+  }
+  input[type='radio'] {
+    @apply accent-brand-color;
+  }
+}

@@ -1,37 +1,28 @@
-// src/components/LoginPage.tsx
+// src/pages/LoginPage.tsx
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { z } from 'zod'; // 1. Import Zod
+import { useNavigate, Link } from 'react-router-dom';
+import { z } from 'zod';
 
-// 2. Buat skema validasi
 const loginSchema = z.object({
   email: z.string().email({ message: "Format email tidak valid" }),
   password: z.string().min(6, { message: "Password minimal 6 karakter" }),
 });
 
 const LoginPage = () => {
-  // 3. Siapkan state untuk input form 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // State untuk menangani error dari API atau validasi
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Hook untuk navigasi/redirect setelah login
   const navigate = useNavigate();
 
-  // 4. Buat fungsi handleSubmit
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault(); // Mencegah form me-refresh halaman 
-    setError(null); // Reset error setiap kali submit
+    event.preventDefault();
+    setError(null);
 
-    // 5. Validasi input menggunakan Zod
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
-      // Jika validasi gagal, tampilkan error pertama
       setError(validation.error.issues[0].message);
       return;
     }
@@ -39,20 +30,30 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      // 6. Kirim data ke API backend (Modul 3)
-      // GANTI URL INI JIKA PERLU
+      // 1. Kirim data login
       const response = await axios.post('http://localhost:3000/auth/login', {
-        email: email, // atau validation.data.email
-        password: password, // atau validation.data.password
+        email: email,
+        password: password,
       });
-
-      // 7. Simpan token ke localStorage 
-      // Asumsi backend mengembalikan token di response.data.token
-      const token = response.data.data.access_token; // <-- NAMA YANG BENAR
+      
+      const token = response.data.data.access_token;
       if (token) {
+        // 2. Simpan token
         localStorage.setItem('authToken', token);
+
+        // 3. (BARU) Ambil data user untuk mendapatkan nama
+        try {
+          const userResponse = await axios.get('http://localhost:3000/auth/me', {
+             headers: { Authorization: `Bearer ${token}` }
+          });
+          // Asumsi responsenya adalah { ..., username: 'John' }
+          localStorage.setItem('username', userResponse.data.username);
+        } catch (userErr) {
+          console.error("Login berhasil, tapi gagal mengambil data user", userErr);
+          localStorage.setItem('username', 'User'); // Fallback
+        }
         
-        // 8. Arahkan ke halaman utama (daftar buku) 
+        // 4. Arahkan ke halaman utama
         navigate('/');
       } else {
         setError('Login berhasil, namun tidak menerima token.');
@@ -60,7 +61,6 @@ const LoginPage = () => {
 
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        // Tangkap error dari server (misal: "Password salah")
         setError(err.response.data.message || 'Login gagal');
       } else {
         setError('Terjadi kesalahan. Coba lagi.');
@@ -70,39 +70,68 @@ const LoginPage = () => {
     }
   };
 
-  // 9. Buat elemen form (UI)
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="max-w-md mx-auto mt-10 p-8 bg-card-bg border border-border-color rounded-lg shadow-sm">
+      <h2 className="text-3xl font-bold text-center text-dark-text mb-8">
+        Login
+      </h2>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-6 text-center">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email">Email:</label>
+          <label 
+            htmlFor="email" 
+            className="block text-sm font-medium text-dark-text mb-2"
+          >
+            Email
+          </label>
           <input
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)} // 
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Masukkan email"
+            className="w-full px-4 py-3 border border-border-color rounded-md bg-secondary-bg focus:outline-none focus:ring-2 focus:ring-brand-color focus:bg-white"
           />
         </div>
+        
         <div>
-          <label htmlFor="password">Password:</label>
+          <label 
+            htmlFor="password" 
+            className="block text-sm font-medium text-dark-text mb-2"
+          >
+            Password
+          </label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Masukkan password"
+            className="w-full px-4 py-3 border border-border-color rounded-md bg-secondary-bg focus:outline-none focus:ring-2 focus:ring-brand-color focus:bg-white"
           />
         </div>
 
-        {/* Tampilkan pesan error jika ada */}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-
-        <button type="submit" disabled={loading}>
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full bg-brand-color text-white font-semibold py-3 rounded-md uppercase hover:opacity-90 transition-opacity disabled:bg-gray-400"
+        >
           {loading ? 'Loading...' : 'Login'}
         </button>
       </form>
+
+      <p className="text-center text-sm text-light-text mt-6">
+        Belum punya akun?{' '}
+        <Link to="/register" className="font-medium text-brand-color hover:underline">
+          Register di sini
+        </Link>
+      </p>
     </div>
   );
 };

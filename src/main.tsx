@@ -3,14 +3,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import './index.css'
-import { BrowserRouter } from 'react-router-dom' // 1. Import
+import './index.css' // <-- Pastikan ini diimpor
+import { BrowserRouter } from 'react-router-dom'
+import { CartProvider } from './contexts/CartContext' // <-- 1. Import CartProvider
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* 2. Bungkus <App /> dengan <BrowserRouter> */}
     <BrowserRouter>
-      <App />
+      {/* 2. Bungkus App dengan CartProvider */}
+      <CartProvider>
+        <App />
+      </CartProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

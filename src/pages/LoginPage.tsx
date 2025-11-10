@@ -1,8 +1,7 @@
-// src/pages/LoginPage.tsx
-
+// src/pages/LoginPage.tsx - Updated
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { apiClient, API_ENDPOINTS } from '../config/api';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -30,10 +29,10 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      // 1. Kirim data login
-      const response = await axios.post('http://localhost:3000/auth/login', {
-        email: email,
-        password: password,
+      // 1. Login
+      const response = await apiClient.post(API_ENDPOINTS.LOGIN, {
+        email,
+        password,
       });
       
       const token = response.data.data.access_token;
@@ -41,30 +40,23 @@ const LoginPage = () => {
         // 2. Simpan token
         localStorage.setItem('authToken', token);
 
-        // 3. (BARU) Ambil data user untuk mendapatkan nama
+        // 3. Ambil data user
         try {
-          const userResponse = await axios.get('http://localhost:3000/auth/me', {
-             headers: { Authorization: `Bearer ${token}` }
-          });
-          // Asumsi responsenya adalah { ..., username: 'John' }
+          const userResponse = await apiClient.get(API_ENDPOINTS.ME);
           localStorage.setItem('username', userResponse.data.username);
         } catch (userErr) {
-          console.error("Login berhasil, tapi gagal mengambil data user", userErr);
-          localStorage.setItem('username', 'User'); // Fallback
+          console.error("Gagal mengambil data user", userErr);
+          localStorage.setItem('username', 'User');
         }
         
-        // 4. Arahkan ke halaman utama
-        navigate('/');
+        // 4. Navigate
+        navigate('/books');
       } else {
         setError('Login berhasil, namun tidak menerima token.');
       }
 
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.message || 'Login gagal');
-      } else {
-        setError('Terjadi kesalahan. Coba lagi.');
-      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login gagal. Coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -84,10 +76,7 @@ const LoginPage = () => {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label 
-            htmlFor="email" 
-            className="block text-sm font-medium text-dark-text mb-2"
-          >
+          <label htmlFor="email" className="block text-sm font-medium text-dark-text mb-2">
             Email
           </label>
           <input
@@ -101,10 +90,7 @@ const LoginPage = () => {
         </div>
         
         <div>
-          <label 
-            htmlFor="password" 
-            className="block text-sm font-medium text-dark-text mb-2"
-          >
+          <label htmlFor="password" className="block text-sm font-medium text-dark-text mb-2">
             Password
           </label>
           <input

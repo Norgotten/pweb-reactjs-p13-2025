@@ -1,12 +1,13 @@
-// src/pages/BookDetailsPage.tsx
+// src/pages/BookDetailsPage.tsx - Updated
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { apiClient, API_ENDPOINTS } from '../config/api';
 import { useCart } from '../contexts/CartContext';
 import type { Book } from '../contexts/CartContext';
 
 const BookDetailsPage: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>();
+  const navigate = useNavigate();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -16,7 +17,7 @@ const BookDetailsPage: React.FC = () => {
     const fetchBook = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:3000/books/${bookId}`);
+        const response = await apiClient.get(API_ENDPOINTS.BOOK_BY_ID(bookId!));
         setBook(response.data.data);
       } catch (error) {
         console.error("Failed to fetch book details", error);
@@ -28,6 +29,18 @@ const BookDetailsPage: React.FC = () => {
       fetchBook();
     }
   }, [bookId]);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Apakah kamu yakin ingin menghapus buku "${book?.title}"?`)) return;
+
+    try {
+      await apiClient.delete(API_ENDPOINTS.BOOK_BY_ID(bookId!));
+      alert('Buku berhasil dihapus!');
+      navigate('/books');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menghapus buku');
+    }
+  };
 
   if (loading) return <p className="text-center p-10">Loading details...</p>;
   if (!book) return <p className="text-center p-10">Book not found.</p>;
@@ -51,10 +64,18 @@ const BookDetailsPage: React.FC = () => {
         <span className="font-medium text-dark-text"> {book.title}</span>
       </div>
 
-      {/* Header Halaman */}
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold">{book.title}</h1>
-        <p className="text-xl text-light-text mt-2">by {book.writer}</p>
+      {/* Header dengan Delete Button */}
+      <div className="mb-10 flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-bold">{book.title}</h1>
+          <p className="text-xl text-light-text mt-2">by {book.writer}</p>
+        </div>
+        <button
+          onClick={handleDelete}
+          className="bg-red-600 text-white font-semibold px-6 py-2.5 rounded-md hover:bg-red-700 transition-colors"
+        >
+          🗑️ Delete Book
+        </button>
       </div>
 
       {/* Konten Utama */}
@@ -74,17 +95,19 @@ const BookDetailsPage: React.FC = () => {
             </button>
             <span className="text-xl font-semibold w-10 text-center">{quantity}</span>
             <button 
-              onClick={() => setQuantity(q => q + 1)}
-              className="w-10 h-10 border border-border-color rounded-md text-2xl font-light hover:bg-gray-50"
+              onClick={() => setQuantity(q => Math.min(book.stock_quantity, q + 1))}
+              disabled={quantity >= book.stock_quantity}
+              className="w-10 h-10 border border-border-color rounded-md text-2xl font-light hover:bg-gray-50 disabled:opacity-50"
             >
               +
             </button>
           </div>
           <button 
             onClick={handleAddToCart}
-            className="w-full bg-brand-color text-white font-semibold py-3.5 rounded-md uppercase text-sm hover:opacity-90"
+            disabled={book.stock_quantity === 0}
+            className="w-full bg-brand-color text-white font-semibold py-3.5 rounded-md uppercase text-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Buy
+            {book.stock_quantity > 0 ? 'Add to Cart' : 'Out of Stock'}
           </button>
         </div>
 
@@ -92,37 +115,35 @@ const BookDetailsPage: React.FC = () => {
         <div className="lg:col-span-2">
           <h3 className="text-2xl font-semibold mb-4">Details</h3>
           <div className="bg-[#4a4a4a] text-white rounded-lg overflow-hidden">
-            {/* Baris Detail */}
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Book Title</div>
-              <div className="col-span-2 text-gray-300">{book.title}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Author</div>
-              <div className="col-span-2 text-gray-300">{book.writer}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Genre</div>
-              <div className="col-span-2 text-gray-300 capitalize">{book.genre}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Description</div>
-              <div className="col-span-2 text-gray-300 leading-relaxed">{book.description}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Stock Quantity</div>
-              <div className="col-span-2 text-gray-300">{book.stock_quantity}</div>
-            </div>
-            {/* Data Placeholder */}
-            <div className="grid grid-cols-3 gap-4 p-6 border-b border-gray-600">
-              <div className="font-semibold">Published Year</div>
-              <div className="col-span-2 text-gray-300">2006</div>
-            </div>
+            {/* Detail Rows */}
+            <DetailRow label="Book Title" value={book.title} />
+            <DetailRow label="Author" value={book.writer} />
+            <DetailRow label="Genre" value={book.genre} isCapitalize />
+            <DetailRow label="Description" value={book.description || 'No description'} />
+            <DetailRow label="Stock Quantity" value={book.stock_quantity.toString()} />
+            <DetailRow label="Publisher" value="N/A" />
+            <DetailRow label="Published Year" value="N/A" />
+            <DetailRow label="ISBN" value="N/A" isLast />
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Helper Component untuk Detail Row
+const DetailRow: React.FC<{ 
+  label: string; 
+  value: string; 
+  isCapitalize?: boolean;
+  isLast?: boolean;
+}> = ({ label, value, isCapitalize, isLast }) => (
+  <div className={`grid grid-cols-3 gap-4 p-6 ${!isLast ? 'border-b border-gray-600' : ''}`}>
+    <div className="font-semibold">{label}</div>
+    <div className={`col-span-2 text-gray-300 leading-relaxed ${isCapitalize ? 'capitalize' : ''}`}>
+      {value}
+    </div>
+  </div>
+);
 
 export default BookDetailsPage;

@@ -43,7 +43,9 @@ const LoginPage = () => {
         // 3. Ambil data user
         try {
           const userResponse = await apiClient.get(API_ENDPOINTS.ME);
-          localStorage.setItem('username', userResponse.data.username);
+          // Gunakan logika yang sama dengan di Header.tsx
+          const fetchedUsername = userResponse.data.data?.username || userResponse.data.username || 'User';
+          localStorage.setItem('username', fetchedUsername);
         } catch (userErr) {
           console.error("Gagal mengambil data user", userErr);
           localStorage.setItem('username', 'User');

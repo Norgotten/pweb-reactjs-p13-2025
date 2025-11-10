@@ -2,7 +2,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const HomePage: React.FC = () => {
+// 1. Definisikan props yang akan diterima
+interface HomePageProps {
+  isLoggedIn: boolean;
+}
+
+// 2. Terima props isLoggedIn
+const HomePage: React.FC<HomePageProps> = ({ isLoggedIn }) => {
   return (
     <div className="w-full">
       
@@ -16,28 +22,46 @@ const HomePage: React.FC = () => {
             Temukan berbagai buku teknologi, pemrograman, dan inovasi digital dari penerbit terbaik di dunia.
           </p>
 
-          <div className="mt-12 flex flex-col md:flex-row items-center gap-4 bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto">
-            <div className="flex items-center border border-border-color rounded-md py-3 px-4 w-full md:w-auto">
-              <span>Year</span>
-              <span className="ml-2 text-light-text">▼</span>
-            </div>
-            <div className="flex items-center border border-border-color rounded-md py-3 px-4 w-full md:w-auto">
-              <span>Publisher</span>
-              <span className="ml-2 text-light-text">▼</span>
-            </div>
-            <div className="flex-1 flex items-center border border-border-color rounded-md py-3 px-4 w-full">
-              <input type="text" placeholder="Enter book name here" className="w-full outline-none" />
-              <span className="ml-2 text-light-text">🔍</span>
-            </div>
-            <button className="bg-gray-800 text-white font-semibold py-3 px-8 rounded-md w-full md:w-auto hover:bg-gray-700">
-              Search
-            </button>
+          {/* === PERUBAHAN DI SINI === */}
+          {/* Hapus Search Bar, ganti dengan logika CTA */}
+          <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
+            {isLoggedIn ? (
+              // JIKA SUDAH LOGIN: Tampilkan tombol CTA "Find Book!"
+              <Link 
+                to="/books" // Arahkan ke halaman daftar buku
+                // Style diambil dari tombol "Register" di Header.tsx
+                className="w-full sm:w-auto bg-brand-color text-white font-semibold py-3 px-10 rounded-md hover:opacity-90 transition-opacity text-lg"
+              >
+                Find Book!
+              </Link>
+            ) : (
+              // JIKA BELUM LOGIN: Tampilkan tombol Login & Register
+              <>
+                <Link 
+                  to="/login" 
+                  // Style diambil dari tombol "Register" di Header.tsx
+                  className="w-full sm:w-auto bg-brand-color text-white font-semibold py-3 px-10 rounded-md hover:opacity-90 transition-opacity text-lg"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  // Style diambil dari tombol "Search" di HomePage lama
+                  className="w-full sm:w-auto bg-gray-800 text-white font-semibold py-3 px-10 rounded-md hover:bg-gray-700 transition-opacity text-lg"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </div>
+          {/* === AKHIR PERUBAHAN === */}
+
         </div>
       </section>
 
-      {/* 2. FEATURES SECTION */}
+      {/* 2. FEATURES SECTION (Tidak berubah) */}
       <section className="bg-secondary-bg py-20">
+        {/* ... (isi features tidak berubah) ... */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="text-center">
             <span className="text-5xl">🕒</span>
@@ -62,12 +86,13 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. CTA SECTION */}
+      {/* 3. CTA SECTION (Tidak berubah) */}
       <section className="bg-[#a98e76] py-20">
+        {/* ... (isi cta tidak berubah) ... */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-white">
           <div className="text-center md:text-left">
             <h2 className="text-4xl font-bold">GET ALL YOUR BOOKS</h2>
-            <h2 className="text-4xl font-bold">IN THIS LIBRARY!</h2>
+            <h2 className="text-4xl font-Nbold">IN THIS LIBRARY!</h2>
           </div>
           <Link to="/books" className="mt-6 md:mt-0 bg-white text-dark-text font-semibold uppercase py-3 px-10 rounded-md hover:bg-gray-100 transition-colors">
             Booklist

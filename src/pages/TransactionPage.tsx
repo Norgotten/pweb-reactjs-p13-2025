@@ -1,4 +1,4 @@
-// src/pages/TransactionPage.tsx - Updated dengan Checkout
+// src/pages/TransactionPage.tsx - Fixed
 import React, { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { apiClient, API_ENDPOINTS } from '../config/api';
@@ -30,22 +30,32 @@ const TransactionPage: React.FC = () => {
 
     setIsProcessing(true);
     try {
-      // Format items untuk API
+      // Get user_id from token
+      const userResponse = await apiClient.get(API_ENDPOINTS.ME);
+      const userId = userResponse.data.data.id;
+
+      // Format items sesuai backend expectation
       const items = cartItems.map(item => ({
         book_id: item.id,
         quantity: item.quantity,
-        price: parseFloat(item.price),
       }));
 
+      // Send transaction request
       const response = await apiClient.post(API_ENDPOINTS.TRANSACTIONS, {
+        user_id: userId,
         items: items,
       });
 
-      alert('Transaksi berhasil! ID: ' + response.data.data.id);
+      // Backend returns: { success, message, data: { transaction_id, total_quantity, total_price } }
+      const transactionId = response.data.data.transaction_id;
+      
+      alert(`Transaksi berhasil! ID: ${transactionId}`);
       clearCart(); // Kosongkan keranjang
       navigate('/transactions/history'); // Arahkan ke riwayat transaksi
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Checkout gagal. Coba lagi.');
+      console.error('Checkout error:', err);
+      const errorMessage = err.response?.data?.message || 'Checkout gagal. Coba lagi.';
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -112,7 +122,7 @@ const TransactionPage: React.FC = () => {
                         </h4>
                       </Link>
                       <p className="text-sm text-light-text">{item.writer}</p>
-                      <p className="text-xs text-light-text mt-1">Genre: {item.genre}</p>
+                      <p className="text-xs text-light-text mt-1 capitalize">Genre: {item.genre}</p>
                     </div>
                   </div>
                   
@@ -120,14 +130,16 @@ const TransactionPage: React.FC = () => {
                   <div className="flex items-center justify-center gap-x-3">
                     <button 
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-7 h-7 border border-border-color rounded-full text-lg hover:bg-gray-50"
+                      disabled={item.quantity <= 1}
+                      className="w-7 h-7 border border-border-color rounded-full text-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       -
                     </button>
                     <span className="font-semibold text-lg">{item.quantity}</span>
                     <button 
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-7 h-7 border border-border-color rounded-full text-lg hover:bg-gray-50"
+                      disabled={item.quantity >= item.stock_quantity}
+                      className="w-7 h-7 border border-border-color rounded-full text-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       +
                     </button>

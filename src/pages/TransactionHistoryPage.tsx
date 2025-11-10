@@ -1,14 +1,13 @@
-// src/pages/TransactionHistoryPage.tsx
+// src/pages/TransactionHistoryPage.tsx - Fixed
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
 
 interface Transaction {
   id: string;
-  total_amount: number;
-  total_price: string;
-  status: string;
-  created_at: string;
+  total_quantity: number; // Backend returns total_quantity
+  total_price: number;    // Backend returns total_price as number
+  created_at?: string;    // Optional, might not be in list response
 }
 
 const TransactionHistoryPage: React.FC = () => {
@@ -23,9 +22,12 @@ const TransactionHistoryPage: React.FC = () => {
       setLoading(true);
       try {
         const response = await apiClient.get(API_ENDPOINTS.TRANSACTIONS);
-        setTransactions(response.data.data || []);
+        // Backend returns: { success, message, data: [...], meta: {...} }
+        const data = response.data.data || [];
+        setTransactions(data);
       } catch (err) {
         console.error("Failed to fetch transactions", err);
+        setTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -37,9 +39,9 @@ const TransactionHistoryPage: React.FC = () => {
   useEffect(() => {
     let result = [...transactions];
 
-    // Search by ID
+    // Search by ID (partial match)
     if (searchId) {
-      result = result.filter(t => t.id.includes(searchId));
+      result = result.filter(t => t.id.toLowerCase().includes(searchId.toLowerCase()));
     }
 
     // Sort
@@ -51,33 +53,34 @@ const TransactionHistoryPage: React.FC = () => {
         result.sort((a, b) => b.id.localeCompare(a.id));
         break;
       case 'amount_asc':
-        result.sort((a, b) => a.total_amount - b.total_amount);
+        result.sort((a, b) => a.total_quantity - b.total_quantity);
         break;
       case 'amount_desc':
-        result.sort((a, b) => b.total_amount - a.total_amount);
+        result.sort((a, b) => b.total_quantity - a.total_quantity);
         break;
       case 'price_asc':
-        result.sort((a, b) => parseFloat(a.total_price) - parseFloat(b.total_price));
+        result.sort((a, b) => a.total_price - b.total_price);
         break;
       case 'price_desc':
-        result.sort((a, b) => parseFloat(b.total_price) - parseFloat(a.total_price));
+        result.sort((a, b) => b.total_price - a.total_price);
         break;
-      default: // newest
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      default: // newest - default sort by id desc as proxy
+        result.sort((a, b) => b.id.localeCompare(a.id));
         break;
     }
 
     setFilteredTransactions(result);
   }, [searchId, sortBy, transactions]);
 
-  const formatCurrency = (value: string) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(parseFloat(value) / 10000);
+    }).format(value / 10000); // Convert from backend format
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('id-ID', {
       year: 'numeric',
       month: 'long',
@@ -140,11 +143,10 @@ const TransactionHistoryPage: React.FC = () => {
       ) : (
         <div className="bg-white border border-border-color rounded-lg overflow-hidden">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-5 gap-4 py-4 px-6 bg-secondary-bg font-semibold text-sm text-dark-text border-b border-border-color">
+          <div className="hidden md:grid grid-cols-4 gap-4 py-4 px-6 bg-secondary-bg font-semibold text-sm text-dark-text border-b border-border-color">
             <div>Transaction ID</div>
             <div className="text-center">Total Items</div>
             <div className="text-center">Total Price</div>
-            <div className="text-center">Date</div>
             <div className="text-center">Action</div>
           </div>
 
@@ -152,19 +154,19 @@ const TransactionHistoryPage: React.FC = () => {
           {filteredTransactions.map((transaction) => (
             <div 
               key={transaction.id}
-              className="grid grid-cols-1 md:grid-cols-5 gap-4 py-4 px-6 border-b border-border-color hover:bg-gray-50 transition-colors"
+              className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4 px-6 border-b border-border-color hover:bg-gray-50 transition-colors"
             >
               <div className="font-mono text-sm text-light-text">
+                <span className="md:hidden font-semibold text-dark-text">ID: </span>
                 {transaction.id.substring(0, 15)}...
               </div>
               <div className="text-center font-semibold">
-                {transaction.total_amount} items
+                <span className="md:hidden text-light-text">Items: </span>
+                {transaction.total_quantity} items
               </div>
               <div className="text-center font-bold text-brand-color">
+                <span className="md:hidden text-light-text">Total: </span>
                 {formatCurrency(transaction.total_price)}
-              </div>
-              <div className="text-center text-sm text-light-text">
-                {formatDate(transaction.created_at)}
               </div>
               <div className="text-center">
                 <Link 

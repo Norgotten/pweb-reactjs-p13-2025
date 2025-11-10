@@ -1,3 +1,4 @@
+// src/pages/AddBookPage.tsx - FIXED
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
@@ -21,6 +22,7 @@ const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(false);
+  const [genreLoading, setGenreLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -34,11 +36,19 @@ const AddBookPage: React.FC = () => {
 
   useEffect(() => {
     const fetchGenres = async () => {
+      setGenreLoading(true);
       try {
         const response = await apiClient.get(API_ENDPOINTS.GENRES);
-        setGenres(response.data.data || []);
-      } catch (err) {
+        console.log('Genres Response:', response.data);
+        
+        // Handle berbagai format response
+        const genreData = response.data.data || response.data || [];
+        setGenres(genreData);
+      } catch (err: any) {
         console.error('Failed to fetch genres', err);
+        setError('Failed to load genres. Please refresh the page.');
+      } finally {
+        setGenreLoading(false);
       }
     };
     fetchGenres();
@@ -161,21 +171,36 @@ const AddBookPage: React.FC = () => {
             <label htmlFor="genre_id" className="block text-sm font-medium text-dark-text mb-2">
               Genre *
             </label>
-            <select
-              id="genre_id"
-              name="genre_id"
-              value={formData.genre_id}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
-              required
-            >
-              <option value="">Select a genre</option>
-              {genres.map(genre => (
-                <option key={genre.id} value={genre.id}>
-                  {genre.name}
-                </option>
-              ))}
-            </select>
+            {genreLoading ? (
+              <div className="w-full px-4 py-3 border border-border-color rounded-md bg-gray-100 text-light-text">
+                Loading genres...
+              </div>
+            ) : genres.length === 0 ? (
+              <div className="w-full px-4 py-3 border border-red-400 rounded-md bg-red-50 text-red-700">
+                No genres available. Please contact administrator.
+              </div>
+            ) : (
+              <select
+                id="genre_id"
+                name="genre_id"
+                value={formData.genre_id}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
+                required
+              >
+                <option value="">Select a genre</option>
+                {genres.map(genre => (
+                  <option key={genre.id} value={genre.id}>
+                    {genre.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {genres.length > 0 && (
+              <p className="text-xs text-light-text mt-1">
+                {genres.length} genres available
+              </p>
+            )}
           </div>
 
           <div>
@@ -195,8 +220,8 @@ const AddBookPage: React.FC = () => {
           <div className="flex gap-4">
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 bg-brand-color text-white font-semibold py-3 rounded-md hover:opacity-90 disabled:bg-gray-400"
+              disabled={loading || genreLoading}
+              className="flex-1 bg-brand-color text-white font-semibold py-3 rounded-md hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Adding...' : 'Add Book'}
             </button>

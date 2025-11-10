@@ -50,11 +50,14 @@ export const API_ENDPOINTS = {
   // Books
   BOOKS: '/books',
   BOOK_BY_ID: (id: string) => `/books/${id}`,
+  BOOKS_BY_GENRE: (genreId: string) => `/books/genre/${genreId}`,
   
   // Genres
-  GENRES: '/genres',
+  GENRES: '/genre', // Backend uses /genre, not /genres
+  GENRE_BY_ID: (id: string) => `/genre/${id}`,
   
   // Transactions
   TRANSACTIONS: '/transactions',
   TRANSACTION_BY_ID: (id: string) => `/transactions/${id}`,
+  TRANSACTION_STATS: '/transactions/statistics',
 };

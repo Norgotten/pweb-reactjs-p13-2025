@@ -1,7 +1,8 @@
-// src/components/Header.tsx - Updated
-import React from 'react';
+// src/components/Header.tsx - Fixed Username Display
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { apiClient, API_ENDPOINTS } from '../config/api';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -10,7 +11,26 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
   const { itemCount } = useCart();
-  const username = localStorage.getItem('username');
+  const [username, setUsername] = useState<string>('User');
+
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (isLoggedIn) {
+        try {
+          const response = await apiClient.get(API_ENDPOINTS.ME);
+          const fetchedUsername = response.data.username || response.data.data?.username || 'User';
+          setUsername(fetchedUsername);
+          localStorage.setItem('username', fetchedUsername);
+        } catch (err) {
+          console.error('Failed to fetch username:', err);
+          const stored = localStorage.getItem('username');
+          setUsername(stored || 'User');
+        }
+      }
+    };
+
+    fetchUsername();
+  }, [isLoggedIn]);
 
   return (
     <header className="bg-card-bg shadow-sm sticky top-0 z-50">
@@ -21,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
             IT Lit Shop
           </Link>
 
-          {/* Navigasi Tengah (Hanya jika sudah login) */}
+          {/* Navigasi Tengah */}
           <div className="hidden sm:flex sm:gap-x-6">
             {isLoggedIn && (
               <>
@@ -42,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
           <div className="flex items-center gap-x-4">
             {isLoggedIn ? (
               <>
-                {/* Keranjang Belanja */}
+                {/* Keranjang */}
                 <Link to="/transactions" className="relative p-1 text-dark-text hover:text-brand-color transition-colors">
                   <span className="text-2xl">🛒</span>
                   {itemCount > 0 && (
@@ -52,11 +72,11 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
                   )}
                 </Link>
 
-                {/* Menu User */}
+                {/* User Menu */}
                 <div className="flex items-center gap-x-2 border border-border-color rounded-full py-1.5 px-3 hover:bg-secondary-bg transition-colors">
                   <span className="text-xl">👤</span>
                   <span className="text-sm font-medium text-dark-text">
-                    {username || 'User'}
+                    {username}
                   </span>
                 </div>
                 
@@ -69,7 +89,6 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
               </>
             ) : (
               <>
-                {/* Link Login/Register */}
                 <Link to="/login" className="text-sm font-medium text-dark-text hover:text-brand-color transition-colors">
                   Login
                 </Link>

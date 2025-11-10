@@ -1,22 +1,20 @@
-// src/pages/TransactionDetailPage.tsx
+// src/pages/TransactionDetailPage.tsx - Fixed
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
 
 interface TransactionItem {
-  id: string;
+  book_id: string;
   book_title: string;
   quantity: number;
-  price: string;
+  subtotal_price: number; // Backend returns subtotal_price
 }
 
 interface TransactionDetail {
   id: string;
-  total_amount: number;
-  total_price: string;
-  status: string;
-  created_at: string;
   items: TransactionItem[];
+  total_quantity: number;
+  total_price: number;
 }
 
 const TransactionDetailPage: React.FC = () => {
@@ -29,6 +27,7 @@ const TransactionDetailPage: React.FC = () => {
       setLoading(true);
       try {
         const response = await apiClient.get(API_ENDPOINTS.TRANSACTION_BY_ID(transactionId!));
+        // Backend returns: { success, message, data: { id, items, total_quantity, total_price } }
         setTransaction(response.data.data);
       } catch (err) {
         console.error("Failed to fetch transaction detail", err);
@@ -44,21 +43,11 @@ const TransactionDetailPage: React.FC = () => {
   if (loading) return <p className="text-center py-10">Loading details...</p>;
   if (!transaction) return <p className="text-center py-10">Transaction not found.</p>;
 
-  const formatCurrency = (value: string) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(parseFloat(value) / 10000);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    }).format(value / 10000); // Convert from backend format
   };
 
   return (
@@ -85,7 +74,7 @@ const TransactionDetailPage: React.FC = () => {
           <div className="flex flex-col gap-4">
             {transaction.items.map((item) => (
               <div 
-                key={item.id}
+                key={item.book_id}
                 className="flex items-center justify-between bg-white p-4 border border-border-color rounded-lg"
               >
                 <div className="flex items-center gap-4">
@@ -96,13 +85,13 @@ const TransactionDetailPage: React.FC = () => {
                     <h4 className="font-semibold text-dark-text">{item.book_title}</h4>
                     <p className="text-sm text-light-text">Quantity: {item.quantity}</p>
                     <p className="text-sm font-medium text-brand-color mt-1">
-                      {formatCurrency(item.price)} each
+                      {formatCurrency(item.subtotal_price / item.quantity)} each
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-dark-text">
-                    {formatCurrency((parseFloat(item.price) * item.quantity).toString())}
+                    {formatCurrency(item.subtotal_price)}
                   </p>
                 </div>
               </div>
@@ -125,23 +114,16 @@ const TransactionDetailPage: React.FC = () => {
               </div>
               
               <div className="flex justify-between py-2 border-b border-light-text">
-                <span className="text-light-text">Date</span>
-                <span className="font-medium text-dark-text">
-                  {formatDate(transaction.created_at)}
-                </span>
-              </div>
-              
-              <div className="flex justify-between py-2 border-b border-light-text">
                 <span className="text-light-text">Total Items</span>
                 <span className="font-semibold text-dark-text">
-                  {transaction.total_amount} items
+                  {transaction.total_quantity} items
                 </span>
               </div>
               
               <div className="flex justify-between py-2 border-b border-light-text">
                 <span className="text-light-text">Status</span>
                 <span className="font-semibold text-green-600 capitalize">
-                  {transaction.status}
+                  Completed
                 </span>
               </div>
             </div>

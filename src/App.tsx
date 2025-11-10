@@ -1,4 +1,3 @@
-// src/App.tsx - Updated
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import BooksPage from './pages/BooksPage';
 import LoginPage from './pages/LoginPage';
@@ -9,6 +8,8 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import TransactionPage from './pages/TransactionPage';
 import BookDetailsPage from './pages/BookDetailsPage';
+import TransactionHistoryPage from './pages/TransactionHistoryPage';
+import TransactionDetailPage from './pages/TransactionDetailPage';
 
 function App() {
   const navigate = useNavigate();

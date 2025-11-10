@@ -1,7 +1,7 @@
-// src/components/BookCard.tsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
-import type { Book } from '../contexts/CartContext'; // Import tipe
+import type { Book } from '../contexts/CartContext';
 
 interface BookCardProps {
   book: Book;
@@ -14,10 +14,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, listNumber }) => {
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(parseFloat(book.price) / 10000); // Sesuaikan pembagi
+  }).format(parseFloat(book.price) / 10000);
 
   return (
-    <div className="flex items-start gap-x-6 bg-card-bg p-6 border border-border-color rounded-lg">
+    <div className="flex items-start gap-x-6 bg-card-bg p-6 border border-border-color rounded-lg hover:shadow-md transition-shadow">
       <span className="text-lg font-semibold text-light-text pt-1">
         {listNumber}.
       </span>
@@ -27,9 +27,11 @@ const BookCard: React.FC<BookCardProps> = ({ book, listNumber }) => {
         <span className="inline-block bg-secondary-bg text-brand-color text-xs font-semibold px-3 py-1 rounded-full uppercase">
           {book.genre}
         </span>
-        <h3 className="text-xl font-semibold text-dark-text mt-2 mb-1">
-          {book.title}
-        </h3>
+        <Link to={`/books/${book.id}`}>
+          <h3 className="text-xl font-semibold text-dark-text mt-2 mb-1 hover:text-brand-color cursor-pointer">
+            {book.title}
+          </h3>
+        </Link>
         <p className="text-sm text-light-text italic">
           by {book.writer}
         </p>

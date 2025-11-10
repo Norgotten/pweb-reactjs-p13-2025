@@ -1,12 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-@layer base {
-  body {
-    @apply bg-primary-bg text-dark-text font-poppins;
-  }
-  input[type='radio'] {
-    @apply accent-brand-color;
-  }
+@theme {
+  --color-primary-bg: #fdfaf7;
+  --color-secondary-bg: #f4eee9;
+  --color-card-bg: #ffffff;
+  --color-brand-color: #c4a387;
+  --color-dark-text: #333333;
+  --color-light-text: #777777;
+  --color-border-color: #e0e0e0;
+  
+  --font-family-poppins: 'Poppins', sans-serif;
+}
+
+body {
+  font-family: var(--font-family-poppins);
+  background-color: var(--color-primary-bg);
+  color: var(--color-dark-text);
+}
+
+input[type='radio'] {
+  accent-color: var(--color-brand-color);
 }

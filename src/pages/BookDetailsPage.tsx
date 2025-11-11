@@ -1,4 +1,4 @@
-// src/pages/BookDetailsPage.tsx - FIXED ALL ISSUES
+// src/pages/BookDetailsPage.tsx - COMPLETE VERSION (All DB Fields)
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
@@ -8,13 +8,21 @@ import type { Book } from '../contexts/CartContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
 
+// ✅ Extended Book interface with all DB fields
+interface BookDetail extends Book {
+  publisher?: string;           // ✅ From DB
+  publication_year?: number;    // ✅ From DB
+  isbn?: string;                // ✅ Optional (not in your DB yet)
+  condition?: string;           // ✅ Optional (not in your DB yet)
+}
+
 const BookDetailsPage: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { addToCart } = useCart();
   
-  const [book, setBook] = useState<Book | null>(null);
+  const [book, setBook] = useState<BookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -79,10 +87,14 @@ const BookDetailsPage: React.FC = () => {
 
   const formatCurrency = (value: string | number) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('en-US', {
+    const actualPrice = numValue / 10000;
+    
+    return new Intl.NumberFormat('id-ID', {
       style: 'currency',
-      currency: 'USD',
-    }).format(numValue / 10000);
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(actualPrice);
   };
 
   if (loading) return <LoadingSpinner message="Loading book details..." />;
@@ -146,7 +158,7 @@ const BookDetailsPage: React.FC = () => {
             {/* Quantity Selector */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-dark-text mb-3">
-                Quantity
+                Jumlah
               </label>
               <div className="flex items-center gap-4">
                 <button 
@@ -175,36 +187,58 @@ const BookDetailsPage: React.FC = () => {
               disabled={book.stock_quantity === 0}
               className="w-full bg-brand-color text-white font-semibold py-4 rounded-md uppercase text-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all mb-4"
             >
-              {book.stock_quantity > 0 ? '🛒 Add to Cart' : 'Out of Stock'}
+              {book.stock_quantity > 0 ? '🛒 Tambah ke Keranjang' : 'Stok Habis'}
             </button>
 
             {/* Stock Info */}
             <div className="text-center">
               {book.stock_quantity > 0 ? (
                 <p className="text-sm text-green-600 font-medium">
-                  ✓ {book.stock_quantity} units available
+                  ✓ {book.stock_quantity} unit tersedia
                 </p>
               ) : (
                 <p className="text-sm text-red-600 font-medium">
-                  ✕ This item is currently unavailable
+                  ✕ Buku sedang tidak tersedia
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Details */}
+        {/* Right Column: Details - ✅ WITH ALL DB FIELDS */}
         <div className="lg:col-span-2">
-          <h3 className="text-2xl font-semibold mb-4">Book Details</h3>
+          <h3 className="text-2xl font-semibold mb-4">Detail Buku</h3>
           <div className="bg-[#4a4a4a] text-white rounded-lg overflow-hidden">
-            <DetailRow label="Book Title" value={book.title} />
-            <DetailRow label="Author" value={book.writer} />
+            <DetailRow label="Judul Buku" value={book.title} />
+            <DetailRow label="Penulis" value={book.writer} />
+            
+            {/* ✅ Publisher (NEW) */}
+            {book.publisher && (
+              <DetailRow label="Penerbit" value={book.publisher} />
+            )}
+            
+            {/* ✅ Publication Year (NEW) */}
+            {book.publication_year && (
+              <DetailRow label="Tahun Terbit" value={book.publication_year.toString()} />
+            )}
+            
             <DetailRow label="Genre" value={book.genre} isCapitalize />
-            <DetailRow label="Price" value={formatCurrency(book.price)} />
-            <DetailRow label="Stock Quantity" value={`${book.stock_quantity} units`} />
+            <DetailRow label="Harga" value={formatCurrency(book.price)} />
+            <DetailRow label="Stok" value={`${book.stock_quantity} unit`} />
+            
+            {/* ✅ ISBN (Optional - if exists) */}
+            {book.isbn && (
+              <DetailRow label="ISBN" value={book.isbn} />
+            )}
+            
+            {/* ✅ Condition (Optional - if exists) */}
+            {book.condition && (
+              <DetailRow label="Kondisi" value={book.condition} isCapitalize />
+            )}
+            
             <DetailRow 
-              label="Description" 
-              value={book.description || 'No description available for this book.'} 
+              label="Deskripsi" 
+              value={book.description || 'Tidak ada deskripsi untuk buku ini.'} 
               isLast 
             />
           </div>

@@ -1,4 +1,4 @@
-// src/pages/EditBookPage.tsx - FIXED
+// src/pages/EditBookPage.tsx - COMPLETE VERSION (All DB Fields)
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
@@ -6,15 +6,20 @@ import { useToast } from '../contexts/ToastContext';
 import { z } from 'zod';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
+// ✅ Schema sesuai dengan Prisma Database
 const bookSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   writer: z.string().min(1, 'Writer is required').max(100, 'Writer name too long'),
+  publisher: z.string().min(1, 'Publisher is required').max(100, 'Publisher name too long'), // ✅ REQUIRED
+  publication_year: z.number()
+    .min(1900, 'Year must be after 1900')
+    .max(new Date().getFullYear(), `Year cannot be in the future`), // ✅ REQUIRED
   price: z.string()
     .min(1, 'Price is required')
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Price must be a positive number'),
   stock_quantity: z.number().min(0, 'Stock must be 0 or more').max(10000, 'Stock too high'),
   genre_id: z.string().min(1, 'Genre is required'),
-  description: z.string().max(1000, 'Description too long').optional(),
+  description: z.string().min(1, 'Description is required').max(1000, 'Description too long'), // ✅ REQUIRED
 });
 
 interface Genre {
@@ -26,6 +31,8 @@ interface BookData {
   id: string;
   title: string;
   writer: string;
+  publisher: string;          // ✅ From DB
+  publication_year: number;   // ✅ From DB
   price: string;
   stock_quantity: number;
   genre_id?: string;
@@ -47,6 +54,8 @@ const EditBookPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     writer: '',
+    publisher: '',              // ✅ NEW
+    publication_year: new Date().getFullYear(), // ✅ NEW
     price: '',
     stock_quantity: 0,
     genre_id: '',
@@ -74,6 +83,8 @@ const EditBookPage: React.FC = () => {
         setFormData({
           title: book.title,
           writer: book.writer,
+          publisher: book.publisher || '',           // ✅ NEW
+          publication_year: book.publication_year || new Date().getFullYear(), // ✅ NEW
           price: book.price,
           stock_quantity: book.stock_quantity,
           genre_id: genreId,
@@ -122,7 +133,9 @@ const EditBookPage: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stock_quantity' ? parseInt(value) || 0 : value
+      [name]: name === 'stock_quantity' || name === 'publication_year' 
+        ? parseInt(value) || 0 
+        : value
     }));
     
     if (error) setError(null);
@@ -168,7 +181,7 @@ const EditBookPage: React.FC = () => {
         <span className="font-medium text-dark-text"> Edit</span>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-2">Edit Book</h1>
         <p className="text-light-text mb-8">Update the book information below</p>
 
@@ -180,6 +193,8 @@ const EditBookPage: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="bg-white p-8 border border-border-color rounded-lg space-y-6">
+          
+          {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-dark-text mb-2">
               Book Title <span className="text-red-500">*</span>
@@ -196,23 +211,44 @@ const EditBookPage: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="writer" className="block text-sm font-medium text-dark-text mb-2">
-              Author <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="writer"
-              name="writer"
-              type="text"
-              value={formData.writer}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
-              required
-              disabled={loading}
-            />
+          {/* Writer & Publisher */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="writer" className="block text-sm font-medium text-dark-text mb-2">
+                Author <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="writer"
+                name="writer"
+                type="text"
+                value={formData.writer}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* ✅ Publisher (NEW) */}
+            <div>
+              <label htmlFor="publisher" className="block text-sm font-medium text-dark-text mb-2">
+                Publisher <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="publisher"
+                name="publisher"
+                type="text"
+                value={formData.publisher}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
+                required
+                disabled={loading}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Price, Stock, Year */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-dark-text mb-2">
                 Price (Rp) <span className="text-red-500">*</span>
@@ -232,7 +268,7 @@ const EditBookPage: React.FC = () => {
 
             <div>
               <label htmlFor="stock_quantity" className="block text-sm font-medium text-dark-text mb-2">
-                Stock Quantity <span className="text-red-500">*</span>
+                Stock <span className="text-red-500">*</span>
               </label>
               <input
                 id="stock_quantity"
@@ -247,8 +283,28 @@ const EditBookPage: React.FC = () => {
                 disabled={loading}
               />
             </div>
+
+            {/* ✅ Publication Year (NEW) */}
+            <div>
+              <label htmlFor="publication_year" className="block text-sm font-medium text-dark-text mb-2">
+                Year <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="publication_year"
+                name="publication_year"
+                type="number"
+                min="1900"
+                max={new Date().getFullYear()}
+                value={formData.publication_year}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
+                required
+                disabled={loading}
+              />
+            </div>
           </div>
 
+          {/* Genre */}
           <div>
             <label htmlFor="genre_id" className="block text-sm font-medium text-dark-text mb-2">
               Genre <span className="text-red-500">*</span>
@@ -287,9 +343,10 @@ const EditBookPage: React.FC = () => {
             )}
           </div>
 
+          {/* Description - ✅ NOW REQUIRED */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-dark-text mb-2">
-              Description <span className="text-light-text text-xs">(Optional)</span>
+              Description <span className="text-red-500">*</span>
             </label>
             <textarea
               id="description"
@@ -298,8 +355,9 @@ const EditBookPage: React.FC = () => {
               onChange={handleChange}
               rows={4}
               maxLength={1000}
-              placeholder="Enter a brief description of the book..."
+              placeholder="Enter a detailed description of the book..."
               className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color resize-none"
+              required
               disabled={loading}
             />
             <p className="text-xs text-light-text mt-1">
@@ -307,7 +365,8 @@ const EditBookPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex gap-4">
+          {/* Submit Buttons */}
+          <div className="flex gap-4 pt-4">
             <button
               type="submit"
               disabled={loading || genreLoading || genres.length === 0}

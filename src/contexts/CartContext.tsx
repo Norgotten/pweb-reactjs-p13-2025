@@ -1,15 +1,19 @@
-// src/contexts/CartContext.tsx
+// src/contexts/CartContext.tsx - Updated Book Type
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-// Tipe data untuk Buku (sesuai backend response)
+// ✅ Tipe data untuk Buku (sesuai dengan Prisma Database)
 export type Book = {
   id: string;
   title: string;
   writer: string;
-  price: string; // Backend returns as string (Decimal)
+  publisher?: string;         // ✅ From DB (optional for backwards compatibility)
+  publication_year?: number;  // ✅ From DB (optional for backwards compatibility)
+  price: string;              // Backend returns as string (Decimal)
   stock_quantity: number;
   description: string;
-  genre: string; // Backend returns genre name, bukan object
+  genre: string;              // Backend returns genre name, bukan object
+  isbn?: string;              // ✅ Optional (if you add later)
+  condition?: string;         // ✅ Optional (if you add later)
 };
 
 // Tipe data untuk Item di Keranjang
@@ -62,7 +66,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Check stock limit
         const newQuantity = existingItem.quantity + quantity;
         if (newQuantity > book.stock_quantity) {
-          alert(`Cannot add more. Stock available: ${book.stock_quantity}`);
+          alert(`Tidak bisa menambah lebih banyak. Stok tersedia: ${book.stock_quantity}`);
           return prevItems;
         }
         return prevItems.map((item) =>
@@ -71,7 +75,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         // Check stock before adding
         if (quantity > book.stock_quantity) {
-          alert(`Cannot add more. Stock available: ${book.stock_quantity}`);
+          alert(`Tidak bisa menambah lebih banyak. Stok tersedia: ${book.stock_quantity}`);
           return prevItems;
         }
         return [...prevItems, { ...book, quantity: quantity }];
@@ -94,7 +98,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (item.id === bookId) {
           // Check stock limit
           if (quantity > item.stock_quantity) {
-            alert(`Cannot add more. Stock available: ${item.stock_quantity}`);
+            alert(`Tidak bisa menambah lebih banyak. Stok tersedia: ${item.stock_quantity}`);
             return item;
           }
           return { ...item, quantity: quantity };

@@ -1,4 +1,4 @@
-// src/components/Header.tsx - FIXED & OPTIMIZED
+// src/components/Header.tsx - FIXED
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
@@ -22,14 +22,14 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
         return;
       }
 
-      // Cek localStorage dulu
+      // Check localStorage first
       const storedUsername = localStorage.getItem('username');
       if (storedUsername && storedUsername !== 'User') {
         setUsername(storedUsername);
         return;
       }
 
-      // Fetch dari API jika belum ada
+      // Fetch from API if not in localStorage
       setIsLoading(true);
       try {
         const response = await apiClient.get(API_ENDPOINTS.ME);
@@ -56,10 +56,10 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="text-2xl font-bold text-dark-text hover:text-brand-color transition-colors">
-            IT Lit Shop
+            📚 IT Lit Shop
           </Link>
 
-          {/* Navigasi Tengah */}
+          {/* Middle Navigation */}
           <div className="hidden sm:flex sm:gap-x-6">
             {isLoggedIn && (
               <>
@@ -97,11 +97,11 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
             )}
           </div>
 
-          {/* Aksi Kanan */}
+          {/* Right Actions */}
           <div className="flex items-center gap-x-4">
             {isLoggedIn ? (
               <>
-                {/* Keranjang */}
+                {/* Shopping Cart */}
                 <Link 
                   to="/transactions" 
                   className="relative p-1 text-dark-text hover:text-brand-color transition-colors"

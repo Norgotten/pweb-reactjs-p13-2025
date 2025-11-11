@@ -1,10 +1,10 @@
-// src/pages/EditBookPage.tsx - NEW FEATURE
+// src/pages/EditBookPage.tsx - FIXED
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
+import { useToast } from '../contexts/ToastContext';
 import { z } from 'zod';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { useToast } from '../contexts/ToastContext';
 
 const bookSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
@@ -22,13 +22,14 @@ interface Genre {
   name: string;
 }
 
-interface Book {
+interface BookData {
   id: string;
   title: string;
   writer: string;
   price: string;
   stock_quantity: number;
-  genre_id: string;
+  genre_id?: string;
+  genre?: string | { id: string; name: string };
   description: string;
 }
 
@@ -60,14 +61,22 @@ const EditBookPage: React.FC = () => {
       setPageLoading(true);
       try {
         const response = await apiClient.get(API_ENDPOINTS.BOOK_BY_ID(bookId));
-        const book = response.data.data;
+        const book: BookData = response.data.data;
+        
+        // Extract genre_id from different possible formats
+        let genreId = '';
+        if (book.genre_id) {
+          genreId = book.genre_id;
+        } else if (typeof book.genre === 'object' && book.genre !== null && 'id' in book.genre) {
+          genreId = book.genre.id;
+        }
         
         setFormData({
           title: book.title,
           writer: book.writer,
           price: book.price,
           stock_quantity: book.stock_quantity,
-          genre_id: book.genre_id || '',
+          genre_id: genreId,
           description: book.description || '',
         });
       } catch (err: any) {
@@ -82,7 +91,7 @@ const EditBookPage: React.FC = () => {
     fetchBook();
   }, [bookId, navigate, showToast]);
 
-  // Fetch genres
+  // Fetch genres separately
   useEffect(() => {
     const fetchGenres = async () => {
       setGenreLoading(true);
@@ -95,17 +104,19 @@ const EditBookPage: React.FC = () => {
           setGenres(genreData);
         } else {
           setError('No genres available. Please contact administrator.');
+          showToast('No genres found', 'warning');
         }
       } catch (err: any) {
         console.error('Failed to fetch genres', err);
         const errorMsg = err.response?.data?.message || 'Failed to load genres.';
         setError(errorMsg);
+        showToast(errorMsg, 'error');
       } finally {
         setGenreLoading(false);
       }
     };
     fetchGenres();
-  }, []);
+  }, [showToast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -123,8 +134,9 @@ const EditBookPage: React.FC = () => {
 
     const validation = bookSchema.safeParse(formData);
     if (!validation.success) {
-      setError(validation.error.issues[0].message);
-      showToast(validation.error.issues[0].message, 'error');
+      const errorMsg = validation.error.issues[0].message;
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       return;
     }
 
@@ -215,6 +227,7 @@ const EditBookPage: React.FC = () => {
                 required
                 disabled={loading}
               />
+              <p className="text-xs text-light-text mt-1">Enter price in Rupiah</p>
             </div>
 
             <div>
@@ -245,29 +258,38 @@ const EditBookPage: React.FC = () => {
                 <span className="animate-spin">⏳</span>
                 <span>Loading genres...</span>
               </div>
+            ) : genres.length === 0 ? (
+              <div className="w-full px-4 py-3 border border-red-400 rounded-md bg-red-50 text-red-700">
+                ⚠️ No genres available. Please contact administrator.
+              </div>
             ) : (
-              <select
-                id="genre_id"
-                name="genre_id"
-                value={formData.genre_id}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
-                required
-                disabled={loading}
-              >
-                <option value="">Select a genre</option>
-                {genres.map(genre => (
-                  <option key={genre.id} value={genre.id}>
-                    {genre.name}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  id="genre_id"
+                  name="genre_id"
+                  value={formData.genre_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color"
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select a genre</option>
+                  {genres.map(genre => (
+                    <option key={genre.id} value={genre.id}>
+                      {genre.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-light-text mt-1">
+                  {genres.length} genre{genres.length !== 1 ? 's' : ''} available
+                </p>
+              </>
             )}
           </div>
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-dark-text mb-2">
-              Description
+              Description <span className="text-light-text text-xs">(Optional)</span>
             </label>
             <textarea
               id="description"
@@ -276,6 +298,7 @@ const EditBookPage: React.FC = () => {
               onChange={handleChange}
               rows={4}
               maxLength={1000}
+              placeholder="Enter a brief description of the book..."
               className="w-full px-4 py-3 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-brand-color resize-none"
               disabled={loading}
             />

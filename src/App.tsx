@@ -1,4 +1,3 @@
-// src/App.tsx - FIXED with Edit Route
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import BooksPage from './pages/BooksPage';
 import LoginPage from './pages/LoginPage';
@@ -25,7 +24,7 @@ function App() {
     navigate('/login');
   };
 
-  // Halaman full-width
+  // Full-width pages
   const fullWidthPaths = ['/', '/login', '/register'];
   const isFullWidth = fullWidthPaths.includes(location.pathname);
 
@@ -44,7 +43,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
+          {/* Protected Routes - Books */}
           <Route
             path="/books"
             element={<ProtectedRoute><BooksPage /></ProtectedRoute>}
@@ -56,10 +55,6 @@ function App() {
           <Route
             path="/books/:bookId"
             element={<ProtectedRoute><BookDetailsPage /></ProtectedRoute>}
-          />
-          <Route
-            path="/books/:bookId/edit"
-            element={<ProtectedRoute><EditBookPage /></ProtectedRoute>}
           />
           <Route
             path="/transactions"

@@ -1,15 +1,15 @@
-// src/pages/BookDetailsPage.tsx - ENHANCED
+// src/pages/BookDetailsPage.tsx - Updated
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
 import { useCart } from '../contexts/CartContext';
-import { useToast } from '../contexts/ToastContext';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 import type { Book } from '../contexts/CartContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const BookDetailsPage: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -47,17 +47,8 @@ const BookDetailsPage: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner message="Loading book details..." />;
-  if (!book) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-light-text mb-4">Book not found.</p>
-        <Link to="/books" className="text-brand-color hover:underline">
-          Back to Books
-        </Link>
-      </div>
-    );
-  }
+  if (loading) return <p className="text-center p-10">Loading details...</p>;
+  if (!book) return <p className="text-center p-10">Book not found.</p>;
 
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -84,20 +75,12 @@ const BookDetailsPage: React.FC = () => {
           <h1 className="text-4xl font-bold">{book.title}</h1>
           <p className="text-xl text-light-text mt-2">by {book.writer}</p>
         </div>
-        <div className="flex gap-3">
-          <Link
-            to={`/books/${bookId}/edit`}
-            className="bg-brand-color text-white font-semibold px-6 py-2.5 rounded-md hover:opacity-90 transition-opacity"
-          >
-            ✏️ Edit Book
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="bg-red-600 text-white font-semibold px-6 py-2.5 rounded-md hover:bg-red-700 transition-colors"
-          >
-            🗑️ Delete
-          </button>
-        </div>
+        <button
+          onClick={handleDelete}
+          className="bg-red-600 text-white font-semibold px-6 py-2.5 rounded-md hover:bg-red-700 transition-colors"
+        >
+          🗑️ Delete Book
+        </button>
       </div>
 
       {/* Main Content */}
@@ -142,7 +125,8 @@ const BookDetailsPage: React.FC = () => {
         <div className="lg:col-span-2">
           <h3 className="text-2xl font-semibold mb-4">Book Details</h3>
           <div className="bg-[#4a4a4a] text-white rounded-lg overflow-hidden">
-            <DetailRow label="Title" value={book.title} />
+            {/* Detail Rows */}
+            <DetailRow label="Book Title" value={book.title} />
             <DetailRow label="Author" value={book.writer} />
             <DetailRow label="Genre" value={book.genre} isCapitalize />
             <DetailRow label="Description" value={book.description || 'No description available'} />
@@ -157,7 +141,7 @@ const BookDetailsPage: React.FC = () => {
   );
 };
 
-// Helper Component
+// Helper Component untuk Detail Row
 const DetailRow: React.FC<{ 
   label: string; 
   value: string; 

@@ -128,7 +128,7 @@ const TransactionPage: React.FC = () => {
                 <div key={item.id} className="grid grid-cols-2 md:grid-cols-5 gap-4 items-center bg-white p-4 border border-border-color rounded-lg hover:shadow-md transition-shadow">
                   {/* Item Details */}
                   <div className="col-span-2 flex items-center gap-x-4">
-                    <div className="w-16 h-20 bg-secondary-bg rounded-md flex-shrink-0 flex items-center justify-center text-2xl">
+                    <div className="w-16 h-20 bg-secondary-bg rounded-md shrink-0 flex items-center justify-center text-2xl">
                       📖
                     </div>
                     <div>

@@ -1,5 +1,6 @@
-// src/contexts/ToastContext.tsx
+// src/contexts/ToastContext.tsx - FIXED
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import Toast, { ToastType } from '../components/common/Toast';
 
 interface ToastMessage {
   id: string;

@@ -1,7 +1,7 @@
-// src/components/common/Toast.tsx
+// src/components/common/Toast.tsx - FIXED
 import React, { useEffect } from 'react';
 
-type ToastType = 'success' | 'error' | 'info' | 'warning';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastProps {
   message: string;
@@ -44,3 +44,4 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
   );
 };
 
+export default Toast;

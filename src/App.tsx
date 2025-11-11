@@ -1,8 +1,10 @@
+// src/App.tsx - FIXED with Edit Route
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import BooksPage from './pages/BooksPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AddBookPage from './pages/AddBookPage';
+import EditBookPage from './pages/EditBookPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -54,6 +56,10 @@ function App() {
           <Route
             path="/books/:bookId"
             element={<ProtectedRoute><BookDetailsPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/books/:bookId/edit"
+            element={<ProtectedRoute><EditBookPage /></ProtectedRoute>}
           />
           <Route
             path="/transactions"

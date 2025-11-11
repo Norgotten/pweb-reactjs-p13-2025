@@ -1,7 +1,8 @@
-// src/pages/AddBookPage.tsx - FIXED & ENHANCED
+// src/pages/AddBookPage.tsx - ENHANCED
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiClient, API_ENDPOINTS } from '../config/api';
+import { useToast } from '../contexts/ToastContext';
 import { z } from 'zod';
 
 const bookSchema = z.object({
@@ -22,6 +23,7 @@ interface Genre {
 
 const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(false);
   const [genreLoading, setGenreLoading] = useState(true);
@@ -48,17 +50,19 @@ const AddBookPage: React.FC = () => {
           setGenres(genreData);
         } else {
           setError('No genres available. Please contact administrator.');
+          showToast('No genres found', 'warning');
         }
       } catch (err: any) {
         console.error('Failed to fetch genres', err);
-        const errorMsg = err.response?.data?.message || 'Failed to load genres. Please refresh the page.';
+        const errorMsg = err.response?.data?.message || 'Failed to load genres';
         setError(errorMsg);
+        showToast(errorMsg, 'error');
       } finally {
         setGenreLoading(false);
       }
     };
     fetchGenres();
-  }, []);
+  }, [showToast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -67,7 +71,6 @@ const AddBookPage: React.FC = () => {
       [name]: name === 'stock_quantity' ? parseInt(value) || 0 : value
     }));
     
-    // Clear error when user starts typing
     if (error) setError(null);
   };
 
@@ -77,18 +80,21 @@ const AddBookPage: React.FC = () => {
 
     const validation = bookSchema.safeParse(formData);
     if (!validation.success) {
-      setError(validation.error.issues[0].message);
+      const errorMsg = validation.error.issues[0].message;
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       return;
     }
 
     setLoading(true);
     try {
       await apiClient.post(API_ENDPOINTS.BOOKS, formData);
-      alert('Book added successfully!');
+      showToast('Book added successfully!', 'success');
       navigate('/books');
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Failed to add book. Please try again.';
+      const errorMsg = err.response?.data?.message || 'Failed to add book';
       setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

@@ -1,20 +1,20 @@
-// src/main.tsx
-
+// src/main.tsx - FIXED
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import './index.css' // <-- Pastikan ini diimpor
+import './index.css'
 import { BrowserRouter } from 'react-router-dom'
-import { CartProvider } from './contexts/CartContext' // <-- 1. Import CartProvider
-import { ToastProvider } from './contexts/ToastContext';
+import { CartProvider } from './contexts/CartContext'
+import { ToastProvider } from './contexts/ToastContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      {/* 2. Bungkus App dengan CartProvider */}
-      <CartProvider>
-        <App />
-      </CartProvider>
+      <ToastProvider>
+        <CartProvider>
+          <App />
+        </CartProvider>
+      </ToastProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

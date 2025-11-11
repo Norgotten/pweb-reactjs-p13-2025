@@ -1,9 +1,10 @@
-// src/components/common/Toast.tsx - FIXED
+// src/components/common/Toast.tsx - FIXED EXPORT
 import React, { useEffect } from 'react';
 
+// Export type first
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-interface ToastProps {
+export interface ToastProps {
   message: string;
   type: ToastType;
   onClose: () => void;
@@ -19,14 +20,14 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const typeStyles = {
+  const typeStyles: Record<ToastType, string> = {
     success: 'bg-green-500 text-white',
     error: 'bg-red-500 text-white',
     info: 'bg-blue-500 text-white',
     warning: 'bg-yellow-500 text-white',
   };
 
-  const icons = {
+  const icons: Record<ToastType, string> = {
     success: '✓',
     error: '✕',
     info: 'ℹ',
@@ -35,9 +36,13 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
 
   return (
     <div className={`${typeStyles[type]} px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] animate-slide-in`}>
-      <span className="text-xl">{icons[type]}</span>
+      <span className="text-xl font-bold">{icons[type]}</span>
       <p className="flex-1 font-medium">{message}</p>
-      <button onClick={onClose} className="text-xl opacity-70 hover:opacity-100 transition-opacity">
+      <button 
+        onClick={onClose} 
+        className="text-xl opacity-70 hover:opacity-100 transition-opacity ml-2"
+        aria-label="Close"
+      >
         ✕
       </button>
     </div>

@@ -1,6 +1,9 @@
-// src/contexts/ToastContext.tsx - FIXED
+// src/contexts/ToastContext.tsx - FIXED IMPORT
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import Toast, { ToastType } from '../components/common/Toast';
+import Toast from '../components/common/Toast';
+
+// Import type from Toast component
+import type { ToastType } from '../components/common/Toast';
 
 interface ToastMessage {
   id: string;
@@ -29,7 +32,8 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-20 right-4 z-[100] flex flex-col gap-2">
+      {/* Toast Container */}
+      <div className="fixed top-20 right-4 z-100 flex flex-col gap-2">
         {toasts.map(toast => (
           <Toast
             key={toast.id}
